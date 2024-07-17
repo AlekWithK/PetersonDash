@@ -4,3 +4,9 @@ STATION_IDS = [36, 35, 34, 33, 32, 31, 30, 29.5, 29, 28, 27, 26,
 
 BRAND_LOGO = 'assets/USGSLogoPlaceHolder2.png'
 PETERSON_HREF = 'https://www.usgs.gov/mission-areas/water-resources/science/research-vessel-david-h-peterson'
+
+PARAM_NAME_UNIT_DICT = {
+    "chlor": ("Chlorophyll", 'ug/l'),
+    "salinity": ("Salinity", 'ppt'),
+    "water_temp": ('Water Temperature', "deg C")
+}

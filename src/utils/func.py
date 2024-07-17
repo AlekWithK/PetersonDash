@@ -13,4 +13,3 @@ def importData(path: str) -> pd.DataFrame:
     
     else:
         raise Exception("FileError: No suitable dataset found")
-        
