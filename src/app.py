@@ -6,13 +6,16 @@ import plotly.express as px
 import pandas as pd
 
 # Local
-from utils.func import importData
+from utils.func import importData, createSpatialVis
 from utils.lang.en import *
 from utils.design.layout import *
 from utils.const import *
 
 # Data import and preprocess 
 df = importData('src/assets/data/PETERSON_FINAL.parquet')
+stations = importData('src/assets/data/stationlocations.parquet')
+refline = df[df.file == '14322dat.txt']
+refline['name'] = 'REFERENCE LINE'
 df.datetime = pd.to_datetime(df.datetime)
 df['water_temp'] = df['water_temp'].combine_first(df['bow_temp'])
 transectDates = df.groupby('file')['datetime'].min().dt.date.astype(str).to_list()
@@ -29,15 +32,14 @@ app = Dash(
 # Set application layout
 app.layout = (
     html.Div(children=[
-        dbc.Navbar(
-            dbc.Container(
-                [
+        dbc.Navbar(children=[
+            dbc.Container([
                     html.A(
                         # Use row and col to control vertical alignment of logo / brand
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Img(src=BRAND_LOGO, className="navbar-img")),
-                                dbc.Col(dbc.NavbarBrand(headerTitle, className="navbar-title")),
+                        dbc.Row([
+                                dbc.Col(children=html.Img(src=BRAND_LOGO, className="navbar-img"), className='nav-img-col'),
+                                dbc.Col(children=dbc.NavbarBrand(headerTitle, className="navbar-title"), className='nav-title-col'),
+                                #dbc.Col(children=html.Img(src=RV_PETERSON, className="navbar-peterson"), className='nav-pet-col'),
                             ],
                             align="center",
                             className="navbar-row",
@@ -46,8 +48,9 @@ app.layout = (
                         style={"textDecoration": "none"},
                     ),
                 ],
-            className='navbar-container'
-            ),
+            className='navbar-container'),
+        ],
+            #html.Img(src=RV_PETERSON, className="navbar-peterson")],
         color="grey",
         dark=True,
         className="navbar drop-shadow"
@@ -57,11 +60,13 @@ app.layout = (
             dbc.Col(className='col1', children=[
             dbc.Container(className='option-container', children=[
                 dbc.Card(className='option-card drop-shadow', children=[
+                    dbc.Row(dbc.ModalTitle('Filter Options', className='option-header')),
+                    html.Hr(className='option-hr'),
                     dbc.Row(dbc.ModalTitle('Parameter', className='option-modal')),
                     dcc.Dropdown(
                         options=[{'label': 'Chlorophyll', 'value': 'chlor'}, 
-                                {'label': 'Salinity', 'value': 'salinity'}, 
-                                {'label': 'Water Temperature', 'value': 'water_temp'}],
+                                 {'label': 'Salinity', 'value': 'salinity'}, 
+                                 {'label': 'Water Temperature', 'value': 'water_temp'}],
                         value='salinity',
                         placeholder='Salinity',
                         clearable=False,
@@ -70,6 +75,44 @@ app.layout = (
                         style={'border-top': 'none', 
                             'border-radius': '0px',
                             'border-right': 'none'}
+                    ),
+                    dbc.Row(dbc.ModalTitle('Sample Size', className='option-modal')),
+                    dcc.Input(
+                        type='number',
+                        value=10000,
+                        placeholder='10000',
+                        debounce=True,
+                        step=1,
+                        min=1,
+                        max=len(df),
+                        id='sample-size',
+                        className='option-select',
+                        style={
+                            'border-top': 'none',
+                            'border-right': 'none',
+                            'border-width': '1px',
+                            'border-color': 'lightgrey',
+                            'border-radius': '0px'
+                        }
+                    ),
+                    dbc.Row(dbc.ModalTitle('Sample Seed', className='option-modal')),
+                    dcc.Input(
+                        type='number',
+                        placeholder='123',
+                        value=123,
+                        min=0,
+                        max=999999999,
+                        step=1,
+                        debounce=True,
+                        id='sample-seed',
+                        className='option-select',
+                        style={
+                            'border-top': 'none',
+                            'border-right': 'none',
+                            'border-width': '1px',
+                            'border-color': 'lightgrey',
+                            'border-radius': '0px'
+                        }
                     ),
                     dbc.Row(dbc.ModalTitle('Transect by Date', className='option-modal')),
                     dcc.Dropdown(
@@ -82,11 +125,19 @@ app.layout = (
                             'border-radius': '0px',
                             'border-right': 'none'}
                     ),
+                ])
+            ]),
+            dbc.Container(className='option-container', children=[
+                dbc.Card(className='option-card drop-shadow', children=[
+                    dbc.Row(dbc.ModalTitle('Graph Options', className='option-header')),
+                    html.Hr(className='option-hr'),
                     dbc.Row(dbc.ModalTitle('Map Tile', className='option-modal')),
                     dcc.Dropdown(
-                        options=[{'label': 'Open Street Map', 'value': 'open-street-map'}],
-                        value='open-street-map',
-                        placeholder='Open Street Map',
+                        options=[{'label': 'Carto Positron (default)', 'value': 'carto-positron'},
+                                 {'label': 'Carto Darkmatter', 'value': 'carto-darkmatter'},
+                                 {'label': 'Open Street Map', 'value': 'open-street-map'}],
+                        value='carto-positron',
+                        placeholder='Carto Positron (default)',
                         clearable=False,
                         id='map-select',
                         className='option-select',
@@ -94,15 +145,18 @@ app.layout = (
                             'border-radius': '0px',
                             'border-right': 'none'}
                     ),
-                ])
-            ]),
-            dbc.Container(className='option-container', children=[
-                dbc.Card(className='option-card drop-shadow', children=[
-                    dbc.Row(dbc.ModalTitle('Graph Options', className='option-modal')),
                     dbc.Checklist(className='station-toggle', id='station-toggle',
-                                  options=[{"label": "Show Stations", "value": 1}],
+                                  options=[{"label": "Toggle stations", "value": 1}],
                                   value=[0],
-                                  switch=True)
+                                  switch=True),
+                    dbc.Checklist(className='station-toggle', id='ref-toggle',
+                                  options=[{"label": "Toggle reference line", "value": 1}],
+                                  value=[0],
+                                  switch=True),
+                    dbc.Checklist(className='station-toggle', id='coerce-toggle',
+                                  options=[{"label": "Coerce to reference line", "value": 1}],
+                                  value=[0],
+                                  switch=True),
                 ])
             ])
         ]),
@@ -118,40 +172,32 @@ app.layout = (
     ])
 )
 
+# Callback for updating the main plot
 @callback(
     Output('spatial-plot', 'figure'),
     Input('param-select', 'value'),
+    Input('sample-size', 'value'),
+    Input('sample-seed', 'value'),
     Input('date-select', 'value'),
-    Input('map-select', 'value')
+    Input('map-select', 'value'),
+    Input('station-toggle', 'value'),
+    Input('ref-toggle', 'value'),
+    Input('coerce-toggle', 'value'),
 )
-def update_graph(param, date, mapTile):
-    dfg = df.copy()
-    dfg.datetime = pd.to_datetime(dfg.datetime)
+def update_graph_filters(param, samp_size, samp_seed, date, mapTile, station_t, ref_t, coerce_t):
+    return createSpatialVis(df, stations, refline, param, samp_size, samp_seed, date, mapTile, station_t, ref_t, coerce_t)
 
-    # For now, sample data if not already sampled by a date to speed things up
-    if not date:
-        dfg = dfg.sample(n=10000)
-    else:
-        dfg = df.copy()
-        dfg = dfg[dfg.datetime.dt.date.astype(str) == date]
-    
-    fig = px.scatter_mapbox(dfg, lat='lat', lon='lon', hover_name=dfg.datetime.dt.date, hover_data={param, 'file', 'dataset'}, color=param,
-                            zoom=3, color_continuous_scale=px.colors.sequential.Viridis, opacity=0.75)
+# Callback for updating sample size/seed dropdown availability
+@callback(
+    Output('sample-size', 'disabled'),
+    Output('sample-seed', 'disabled'),
+    Input('date-select', 'value'),
+)
+def update_fields(date_sel):
+    if date_sel:
+        return True, True
+    return False, False
 
-    fig = fig.update_layout(mapbox_style=mapTile,
-                            margin={"r": 0, "t": 0, "l": 0, "b": 0},
-                            mapbox={'center': {'lat': 37.81, 'lon': -121.99},
-                                    'zoom': 9},
-                            autosize=True,
-                            paper_bgcolor='#999',
-                            coloraxis=dict(
-                                colorbar=dict(thickness=20, len=0.60, x=0.01, y=0.32,
-                                              title=f'{PARAM_NAME_UNIT_DICT[param][0]} ({PARAM_NAME_UNIT_DICT[param][1]})',
-                                              outlinecolor='black', outlinewidth=1.5, title_side='bottom')),
-                            font=dict(size=14, weight='bold'))
-
-
-    return fig
 
 if __name__ == '__main__':
     app.run(debug=True)

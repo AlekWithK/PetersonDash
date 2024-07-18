@@ -1,12 +1,32 @@
 /* Header Styling */
 .navbar-container {
+    position: relative;
     margin-left: 0;
+    margin-right: 0;
+    border: black 10px;
+    overflow: hidden;
 }
 
 .navbar {
     margin-top: 0;
     margin-bottom: 0px;
     margin-left: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.navbar-row {
+    align-items: stretch;
+    width: 100%;
+}
+
+.nav-img-col {
+    width: 10%;
+}
+
+.navbar-img {
+    height: 75px;
+    width: 75px;
 }
 
 .navbar-title {
@@ -16,11 +36,14 @@
     font-weight: 550;
     letter-spacing: 1.5px;
     font-variant: small-caps;
+    align-self: left;
+    padding-left: 10px;
 }
 
-.navbar-img {
-    height: 75px;
-    width: 75px;
+.navbar-peterson {
+    position: absolute;
+    right: 0;
+    transform: scale(1.2);
 }
 
 /* Options Styling */
@@ -41,12 +64,30 @@
     border-radius: 0;
 }
 
+.option-header {
+    padding-left: 17px;
+    padding-bottom: 0px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #00714B;
+    font-size: 22px;
+    font-variant: small-caps;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    align-self: center;
+}
+
+.option-hr {
+    border-top: 3px dotted;
+    margin-top: 0px;
+    margin-bottom: 5px;
+}
+
 .option-modal {
     padding-left: 17px;
     padding-bottom: 5px;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     color: #999;
-    font-size: 20px;
+    font-size: 18px;
     font-variant: small-caps;
     font-weight: bold;
     letter-spacing: 1.5px;
@@ -61,6 +102,7 @@
     margin-bottom: 5px;
     border-radius: 10px;
     border-top: none;
+    color: black;
 }
 
 .Select--single > .Select-control, .Select-value, .Select-placeholder {
