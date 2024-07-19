@@ -14,7 +14,9 @@ from utils.const import *
 # Data import and preprocess 
 df = importData('src/assets/data/PETERSON_FINAL.parquet')
 stations = importData('src/assets/data/stationlocations.parquet')
-refline = df[df.file == '14322dat.txt']
+
+refline = df.copy()
+refline = refline[refline.file == '14322dat.txt']
 refline['name'] = 'REFERENCE LINE'
 df.datetime = pd.to_datetime(df.datetime)
 df['water_temp'] = df['water_temp'].combine_first(df['bow_temp'])
@@ -98,8 +100,8 @@ app.layout = (
                     dbc.Row(dbc.ModalTitle('Sample Seed:', className='option-modal')),
                     dcc.Input(
                         type='number',
-                        placeholder='123',
-                        value=123,
+                        placeholder='12345',
+                        value=12345,
                         min=0,
                         max=999999999,
                         step=1,
@@ -118,7 +120,7 @@ app.layout = (
                     dcc.Dropdown(
                         options=STATION_IDS,
                         value=None,
-                        placeholder='None Selected...',
+                        placeholder='None selected...',
                         clearable=True,
                         id='station-select',
                         className='option-select',
@@ -130,7 +132,7 @@ app.layout = (
                     dcc.Dropdown(
                         options=transectDates,
                         value=None,
-                        placeholder='None Selected...',
+                        placeholder='None selected...',
                         id='date-select',
                         className='option-select',
                         style={'border-top': 'none', 

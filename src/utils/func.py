@@ -1,6 +1,7 @@
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import math
 from utils.const import *
 
 def importData(path: str) -> pd.DataFrame:
@@ -26,14 +27,14 @@ def createSpatialVis(dfg, stations, refline, param, mapTile, station_t, ref_t, c
     fig = fig.update_layout(
         mapbox_style=mapTile,
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
-        mapbox={'center': {'lat': 37.81, 'lon': -121.75}, 'zoom': 9},
+        mapbox={'center': {'lat': 37.82, 'lon': -121.75}, 'zoom': 9},
         autosize=True,
         paper_bgcolor='#999',
         coloraxis=dict(
             colorbar=dict(thickness=20, len=0.60, x=0.01, y=0.32,
                 title=f'{PARAM_NAME_UNIT_DICT[param][0]} ({PARAM_NAME_UNIT_DICT[param][1]})',
                 outlinecolor='black', outlinewidth=1.5, title_side='bottom')),
-        font=dict(size=14, weight='bold'))
+        font=dict(size=14, weight='bold', family='Segoe UI'))
     
     # Update
     if mapTile == 'carto-darkmatter':
@@ -60,11 +61,7 @@ def createMetadataTables(dfmd: pd.DataFrame) -> pd.DataFrame:
     dfmd = dfmd.describe().transpose()[['count', 'min', 'max', '50%']].reset_index(names='Parameter')
     dfmd.columns = [col.title() for col in dfmd.columns]
     dfmd['Parameter'] = dfmd['Parameter'].replace('_', ' ').str.title()
-    dfmd = dfmd.round({
-        'Min': 3,
-        'Max': 3,
-        '50%': 3
-    })
+    dfmd = dfmd.round(3)
     dfmd.Count = dfmd.Count.astype(int)
     dfmd.at[0, 'Min'] = dfmd.at[0, 'Min'].date()
     dfmd.at[0, 'Max'] = dfmd.at[0, 'Max'].date()
