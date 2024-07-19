@@ -34,10 +34,10 @@
     font-size: 30px;
     color: rgb(255, 255, 255);
     font-weight: 550;
-    letter-spacing: 1.5px;
     font-variant: small-caps;
     align-self: left;
     padding-left: 10px;
+    letter-spacing: 2.5px;
 }
 
 .navbar-peterson {
@@ -144,17 +144,55 @@
 
 .map-modal {
     padding-left: 17px;
-    padding-bottom: 5px;
+    margin: 5px;
     color: white;
+    font-size: 20px;
+    font-variant: small-caps;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    width: 86%;
+}
+
+.spatial-plot {
+    background-color: #999;
+    align-self: stretch;
+}
+
+.metadata-button {
+    background-color: #00714B;
+    border-color: #00714B;
+    color: white;
+    border-radius: 5px;
+    width: 12%;
+    margin: 5px;
+    text-wrap: nowrap;
+}
+
+.metadata-fade {
+    position: absolute;
+    right: 0;
+    top: 7%;
+    margin-right: 5px;
+    opacity: 0.90;
+}
+
+.medata-card {
+    opacity: 0.75;
+}
+
+.metadata-modal {
+    padding-left: 4px;
+    margin: 0px;
+    color: #999;
     font-size: 20px;
     font-variant: small-caps;
     font-weight: bold;
     letter-spacing: 1.5px;
 }
 
-.spatial-plot {
-    background-color: #999;
-    align-self: stretch;
+.metadata-table {
+    font-size: 14px;
+    margin: 0px;
 }
 
 /* MISC */

@@ -6,7 +6,7 @@ import plotly.express as px
 import pandas as pd
 
 # Local
-from utils.func import importData, createSpatialVis
+from utils.func import importData, createSpatialVis, createMetadataTables
 from utils.lang.en import *
 from utils.design.layout import *
 from utils.const import *
@@ -62,7 +62,7 @@ app.layout = (
                 dbc.Card(className='option-card drop-shadow', children=[
                     dbc.Row(dbc.ModalTitle('Filter Options', className='option-header')),
                     html.Hr(className='option-hr'),
-                    dbc.Row(dbc.ModalTitle('Parameter', className='option-modal')),
+                    dbc.Row(dbc.ModalTitle('Parameter:', className='option-modal')),
                     dcc.Dropdown(
                         options=[{'label': 'Chlorophyll', 'value': 'chlor'}, 
                                  {'label': 'Salinity', 'value': 'salinity'}, 
@@ -76,7 +76,7 @@ app.layout = (
                             'border-radius': '0px',
                             'border-right': 'none'}
                     ),
-                    dbc.Row(dbc.ModalTitle('Sample Size', className='option-modal')),
+                    dbc.Row(dbc.ModalTitle('Sample Size:', className='option-modal')),
                     dcc.Input(
                         type='number',
                         value=10000,
@@ -95,7 +95,7 @@ app.layout = (
                             'border-radius': '0px'
                         }
                     ),
-                    dbc.Row(dbc.ModalTitle('Sample Seed', className='option-modal')),
+                    dbc.Row(dbc.ModalTitle('Sample Seed:', className='option-modal')),
                     dcc.Input(
                         type='number',
                         placeholder='123',
@@ -114,7 +114,19 @@ app.layout = (
                             'border-radius': '0px'
                         }
                     ),
-                    dbc.Row(dbc.ModalTitle('Transect by Date', className='option-modal')),
+                    dbc.Row(dbc.ModalTitle('Sample by Station:', className='option-modal')),
+                    dcc.Dropdown(
+                        options=STATION_IDS,
+                        value=None,
+                        placeholder='None Selected...',
+                        clearable=True,
+                        id='station-select',
+                        className='option-select',
+                        style={'border-top': 'none', 
+                            'border-radius': '0px',
+                            'border-right': 'none'}
+                    ),
+                    dbc.Row(dbc.ModalTitle('Sample by Date:', className='option-modal')),
                     dcc.Dropdown(
                         options=transectDates,
                         value=None,
@@ -131,7 +143,7 @@ app.layout = (
                 dbc.Card(className='option-card drop-shadow', children=[
                     dbc.Row(dbc.ModalTitle('Graph Options', className='option-header')),
                     html.Hr(className='option-hr'),
-                    dbc.Row(dbc.ModalTitle('Map Tile', className='option-modal')),
+                    dbc.Row(dbc.ModalTitle('Map Tile:', className='option-modal')),
                     dcc.Dropdown(
                         options=[{'label': 'Carto Positron (default)', 'value': 'carto-positron'},
                                  {'label': 'Carto Darkmatter', 'value': 'carto-darkmatter'},
@@ -162,10 +174,27 @@ app.layout = (
         ]),
             dbc.Container(className='map-container', fluid=True, children=[
                 dbc.Card(className='map-card drop-shadow', children=[
-                    dbc.Row(dbc.ModalTitle('Transect Visualization', className='map-modal')),
-                    dcc.Graph(id='spatial-plot', className='spatial-plot',
-                            style={'height': '70vh'},
-                            config={'displayModeBar': False})
+                    dbc.Row(children=[
+                        dbc.ModalTitle('Transect Visualization', className='map-modal'),
+                        dbc.Button("Show/Hide Metadata", id='metadata-button', className='metadata-button')
+                    ]),
+                    dcc.Loading(id='spatial-loading', children=[
+                        dcc.Graph(id='spatial-plot', className='spatial-plot',
+                        style={'height': '70vh'},
+                        config={'displayModeBar': False}
+                        )],                        
+                        parent_style={"visibility":"visible", "opacity": 1.0, "backgroundColor": "white"},
+                        type='cube',
+                        color='#00714B'
+                    ),
+                    dbc.Fade(className='metadata-fade', id='metadata-fade', is_in=False, children=[
+                        dbc.Card(className='metadata-card', children=[
+                            dbc.ModalTitle('Dataset Metadata', className='metadata-modal'),
+                            dbc.Table.from_dataframe(createMetadataTables(df), striped=True, bordered=True, hover=True, className='metadata-table'),
+                            dbc.ModalTitle('Sample Metadata', className='metadata-modal'),
+                            html.Div(id='metadata-sample')
+                        ])
+                    ])
                 ])
             ])
         ])
@@ -175,29 +204,66 @@ app.layout = (
 # Callback for updating the main plot
 @callback(
     Output('spatial-plot', 'figure'),
+    Output('metadata-sample', 'children'),
     Input('param-select', 'value'),
     Input('sample-size', 'value'),
     Input('sample-seed', 'value'),
+    Input('station-select', 'value'),
     Input('date-select', 'value'),
     Input('map-select', 'value'),
     Input('station-toggle', 'value'),
     Input('ref-toggle', 'value'),
     Input('coerce-toggle', 'value'),
 )
-def update_graph_filters(param, samp_size, samp_seed, date, mapTile, station_t, ref_t, coerce_t):
-    return createSpatialVis(df, stations, refline, param, samp_size, samp_seed, date, mapTile, station_t, ref_t, coerce_t)
+def update_graph_filters(param, samp_size, samp_seed, sta_select, date, mapTile, station_t, ref_t, coerce_t):
+    dfg = df.copy()
+    dfg.datetime = pd.to_datetime(dfg.datetime)
+        # For now, sample data if not already sampled by a date to speed things up
+    if not date and not sta_select: # neither
+        dfg = dfg.sample(n=samp_size, random_state=samp_seed)
+    elif date and not sta_select: # date, not station       
+        dfg = dfg[dfg.datetime.dt.date.astype(str) == date]
+    elif sta_select and not date: # station, not date
+        dfg = dfg[dfg.station_id == int(sta_select)]
+    else: # both
+        dfg = dfg[(dfg.station_id == (int(sta_select))) & (dfg.datetime.dt.date.astype(str) == date)]
+
+    fig = createSpatialVis(dfg, stations, refline, param, mapTile, station_t, ref_t, coerce_t)   
+    table = dbc.Table.from_dataframe(createMetadataTables(dfg), striped=True, bordered=True, hover=True, className='metadata-table')   
+    return fig, table
 
 # Callback for updating sample size/seed dropdown availability
 @callback(
     Output('sample-size', 'disabled'),
     Output('sample-seed', 'disabled'),
     Input('date-select', 'value'),
+    Input('station-select', 'value')
 )
-def update_fields(date_sel):
-    if date_sel:
+def update_fields(date_sel, sta_select):
+    if date_sel or sta_select:
         return True, True
     return False, False
 
+# Metadata button callback
+@callback(
+    Output('metadata-fade', 'is_in'),
+    Output('metadata-button', 'style'),
+    Input('metadata-button', 'n_clicks'),
+    State('metadata-fade', 'is_in')
+)
+def metadata_button(n, is_in):
+    if not n: # metadata OFF -- page load
+        style = {'background-color': '#999', 'border-color': '#00714B'}
+        return False, style
+    
+    if n % 2 == 0: # metadata OFF
+        style = {'background-color': '#999', 'border-color': '#00714B'}
+        return False, style
+    
+    else: # metadata ON
+        style = {'background-color': '#00714B', 'border-color': '#00714B'}
+        return True, style
+    
 
 if __name__ == '__main__':
     app.run(debug=True)

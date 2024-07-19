@@ -17,27 +17,16 @@ def importData(path: str) -> pd.DataFrame:
     else:
         raise Exception("FileError: No suitable dataset found")
     
-def createSpatialVis(df, stations, refline, param, samp_size, samp_seed, date, 
-                     mapTile, station_t, ref_t, coerce_t) -> go.Figure:
 
-    # For now, sample data if not already sampled by a date to speed things up
-    if not date:
-        dfg = df.copy()
-        dfg.datetime = pd.to_datetime(dfg.datetime)
-        dfg = dfg.sample(n=samp_size, random_state=samp_seed)
-    else:
-        dfg = df.copy()
-        dfg.datetime = pd.to_datetime(dfg.datetime)
-        dfg = dfg[dfg.datetime.dt.date.astype(str) == date]
-    
+def createSpatialVis(dfg, stations, refline, param, mapTile, station_t, ref_t, coerce_t) -> go.Figure:
+
     fig = px.scatter_mapbox(dfg, lat='lat', lon='lon', hover_name=dfg.datetime.dt.date, hover_data={param, 'file', 'dataset'}, color=param,
                             zoom=3, color_continuous_scale=px.colors.sequential.Viridis, opacity=0.75)
     
-
     fig = fig.update_layout(
         mapbox_style=mapTile,
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
-        mapbox={'center': {'lat': 37.81, 'lon': -121.99}, 'zoom': 9},
+        mapbox={'center': {'lat': 37.81, 'lon': -121.75}, 'zoom': 9},
         autosize=True,
         paper_bgcolor='#999',
         coloraxis=dict(
@@ -64,3 +53,20 @@ def createSpatialVis(df, stations, refline, param, samp_size, samp_seed, date,
         fig = fig.add_trace(fig2.data[0])
 
     return fig
+
+def createMetadataTables(dfmd: pd.DataFrame) -> pd.DataFrame:
+    keepcol = ['datetime', 'chlor', 'salinity', 'turbidity', 'depth', 'water_temp']
+    dfmd = dfmd[keepcol]
+    dfmd = dfmd.describe().transpose()[['count', 'min', 'max', '50%']].reset_index(names='Parameter')
+    dfmd.columns = [col.title() for col in dfmd.columns]
+    dfmd['Parameter'] = dfmd['Parameter'].replace('_', ' ').str.title()
+    dfmd = dfmd.round({
+        'Min': 3,
+        'Max': 3,
+        '50%': 3
+    })
+    dfmd.Count = dfmd.Count.astype(int)
+    dfmd.at[0, 'Min'] = dfmd.at[0, 'Min'].date()
+    dfmd.at[0, 'Max'] = dfmd.at[0, 'Max'].date()
+    dfmd.at[0, '50%'] = dfmd.at[0, '50%'].date()
+    return dfmd

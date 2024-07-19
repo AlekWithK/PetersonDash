@@ -1,2 +1,2 @@
-headerTitle = 'SF Bay Peterson Flowthrough Project'
+headerTitle = 'PETERSON FLOWTHROUGH PROJECT'
 headerDescription = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi vitae ante placerat, consequat tortor ut, venenatis arcu. Etiam dictum efficitur ligula, sed tincidunt ipsum rutrum ac. Curabitur ac mollis leo. Curabitur ultrices tortor ac orci efficitur, sed laoreet elit venenatis. Maecenas ut erat metus. Aenean quis augue nibh. Sed auctor in quam at eleifend.'
