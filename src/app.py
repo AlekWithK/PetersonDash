@@ -1,8 +1,10 @@
 # Packages
 from dash import Dash, html, dcc, callback, Output, Input, State
 import dash_bootstrap_components as dbc
+from dash.exceptions import PreventUpdate
 import dash_mantine_components as dmc
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 
 # Local
@@ -33,7 +35,7 @@ app = Dash(
 
 # Set application layout
 app.layout = (
-    html.Div(children=[
+    html.Div(className='div-spatial', children=[
         dbc.Navbar(children=[
             dbc.Container([
                     html.A(
@@ -53,7 +55,7 @@ app.layout = (
             className='navbar-container'),
         ],
             #html.Img(src=RV_PETERSON, className="navbar-peterson")],
-        color="grey",
+        color="#999",
         dark=True,
         className="navbar drop-shadow"
         ),
@@ -62,7 +64,7 @@ app.layout = (
             dbc.Col(className='col1', children=[
             dbc.Container(className='option-container', children=[
                 dbc.Card(className='option-card drop-shadow', children=[
-                    dbc.Row(dbc.ModalTitle('Filter Options', className='option-header')),
+                    dbc.Row(dbc.ModalTitle('FILTER OPTIONS', className='option-header')),
                     html.Hr(className='option-hr'),
                     dbc.Row(dbc.ModalTitle('Parameter:', className='option-modal')),
                     dcc.Dropdown(
@@ -143,7 +145,7 @@ app.layout = (
             ]),
             dbc.Container(className='option-container', children=[
                 dbc.Card(className='option-card drop-shadow', children=[
-                    dbc.Row(dbc.ModalTitle('Graph Options', className='option-header')),
+                    dbc.Row(dbc.ModalTitle('GRAPH OPTIONS', className='option-header')),
                     html.Hr(className='option-hr'),
                     dbc.Row(dbc.ModalTitle('Map Tile:', className='option-modal')),
                     dcc.Dropdown(
@@ -177,21 +179,25 @@ app.layout = (
             dbc.Container(className='map-container', fluid=True, children=[
                 dbc.Card(className='map-card drop-shadow', children=[
                     dbc.Row(children=[
-                        dbc.ModalTitle('Transect Visualization', className='map-modal'),
-                        dbc.Button("Show/Hide Metadata", id='metadata-button', className='metadata-button')
+                        dbc.ModalTitle('TRANSECT VISUALIZATION', className='map-modal'),
+                        dbc.Button("Toggle Metadata", id='metadata-button', className='metadata-button'),
+                        dbc.Button("Reset Filters", id='reset-button', className='reset-button btn-danger', color='danger')
                     ]),
-                    dcc.Loading(id='spatial-loading', children=[
+                    dcc.Loading(id='spatial-loading', className='spatial-loading', children=[
                         dcc.Graph(id='spatial-plot', className='spatial-plot',
                         style={'height': '70vh'},
-                        config={'displayModeBar': False}
-                        )],                        
-                        parent_style={"visibility":"visible", "opacity": 1.0, "backgroundColor": "white"},
+                        config={'displayModeBar': False},
+                        figure={'layout': go.Layout(xaxis={'showgrid': False, 'zeroline': False, 'showticklabels': False}, 
+                                                    yaxis={'showgrid': False, 'zeroline': False, 'showticklabels': False}
+                    )})],
+                        overlay_style={"visibility":"visible", "opacity": 0.75, "filter": "blur(1.5px)"},                        
+                        parent_style={"visibility":"visible", "backgroundColor": "white"},
                         type='cube',
                         color='#00714B'
                     ),
                     dbc.Fade(className='metadata-fade', id='metadata-fade', is_in=False, children=[
                         dbc.Card(className='metadata-card', children=[
-                            dbc.ModalTitle('Dataset Metadata', className='metadata-modal'),
+                            dbc.ModalTitle('Selection Metadata', className='metadata-modal'),
                             dbc.Table.from_dataframe(createMetadataTables(df), striped=True, bordered=True, hover=True, className='metadata-table'),
                             dbc.ModalTitle('Sample Metadata', className='metadata-modal'),
                             html.Div(id='metadata-sample')
@@ -265,6 +271,22 @@ def metadata_button(n, is_in):
     else: # metadata ON
         style = {'background-color': '#00714B', 'border-color': '#00714B'}
         return True, style
+
+# Filter reset callback    
+@callback(
+    Output('param-select', 'value'),
+    Output('sample-size', 'value'),
+    Output('sample-seed', 'value'),
+    Output('station-select', 'value'),
+    Output('date-select', 'value'),
+    Output('map-select', 'value'),
+    Output('station-toggle', 'value'),
+    Output('ref-toggle', 'value'),
+    Output('coerce-toggle', 'value'),
+    Input('reset-button', 'n_clicks'),
+)
+def reset_filters(n):
+    return 'salinity', 10000, 12345, None, None, 'carto-positron', [0], [0], [0]
     
 
 if __name__ == '__main__':

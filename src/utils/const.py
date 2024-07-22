@@ -4,6 +4,8 @@ STATION_IDS = [36, 35, 34, 33, 32, 31, 30, 29.5, 29, 28, 27, 26,
 
 BRAND_LOGO = 'assets/USGSLogoPlaceHolder2.png'
 RV_PETERSON = 'assets/rv_peterson_sunset.jpg'
+TEXTURE_BG = 'assets/texturegrad.jpg'
+
 PETERSON_HREF = 'https://www.usgs.gov/mission-areas/water-resources/science/research-vessel-david-h-peterson'
 REF_FILE = '14322dat.txt'
 

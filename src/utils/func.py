@@ -36,7 +36,7 @@ def createSpatialVis(dfg, stations, refline, param, mapTile, station_t, ref_t, c
                 outlinecolor='black', outlinewidth=1.5, title_side='bottom')),
         font=dict(size=14, weight='bold', family='Segoe UI'))
     
-    # Update
+    # Update colorbar font color
     if mapTile == 'carto-darkmatter':
         fig = fig.update_layout(
             font=dict(size=14, weight='bold', color='lightgrey'))
