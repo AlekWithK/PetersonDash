@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import pandas as pd
 
 # Local
-from utils.func import importData, createSpatialVis, createMetadataTables
+from utils.func import importData, createSpatialVis, createMetadataTables, createStatisticsPlot
 from utils.lang.en import *
 from utils.design.layout import *
 from utils.const import *
@@ -35,7 +35,7 @@ app = Dash(
 
 # Set application layout
 app.layout = (
-    html.Div(className='div-spatial', children=[
+    html.Div(className='div-body', children=[
         dbc.Navbar(children=[
             dbc.Container([
                     html.A(
@@ -43,19 +43,20 @@ app.layout = (
                         dbc.Row([
                                 dbc.Col(children=html.Img(src=BRAND_LOGO, className="navbar-img"), className='nav-img-col'),
                                 dbc.Col(children=dbc.NavbarBrand(headerTitle, className="navbar-title"), className='nav-title-col'),
-                                #dbc.Col(children=html.Img(src=RV_PETERSON, className="navbar-peterson"), className='nav-pet-col'),
+                                dbc.Col(children=html.A(href=PETERSON_HREF, children=html.H6("ABOUT", className='nav-about')), className='nav-about-col'),
                             ],
                             align="center",
+                            justify='right',
                             className="navbar-row",
                         ),
-                        href=PETERSON_HREF,
+                        href=CAWSC_HREF,
                         style={"textDecoration": "none"},
                     ),
                 ],
             className='navbar-container'),
         ],
             #html.Img(src=RV_PETERSON, className="navbar-peterson")],
-        color="#999",
+        color="#00264C",
         dark=True,
         className="navbar drop-shadow"
         ),
@@ -83,8 +84,8 @@ app.layout = (
                     dbc.Row(dbc.ModalTitle('Sample Size:', className='option-modal')),
                     dcc.Input(
                         type='number',
-                        value=10000,
-                        placeholder='10000',
+                        value=1000,
+                        placeholder='1000',
                         debounce=True,
                         step=1,
                         min=1,
@@ -124,6 +125,7 @@ app.layout = (
                         value=None,
                         placeholder='None selected...',
                         clearable=True,
+                        multi=True,
                         id='station-select',
                         className='option-select',
                         style={'border-top': 'none', 
@@ -190,10 +192,10 @@ app.layout = (
                         figure={'layout': go.Layout(xaxis={'showgrid': False, 'zeroline': False, 'showticklabels': False}, 
                                                     yaxis={'showgrid': False, 'zeroline': False, 'showticklabels': False}
                     )})],
-                        overlay_style={"visibility":"visible", "opacity": 0.75, "filter": "blur(1.5px)"},                        
+                        overlay_style={"visibility":"visible", "opacity": 0.65},                        
                         parent_style={"visibility":"visible", "backgroundColor": "white"},
                         type='cube',
-                        color='#00714B'
+                        color='#00264C'
                     ),
                     dbc.Fade(className='metadata-fade', id='metadata-fade', is_in=False, children=[
                         dbc.Card(className='metadata-card', children=[
@@ -205,6 +207,27 @@ app.layout = (
                     ])
                 ])
             ])
+        ]),
+        dbc.Row(className='stats-row', children=[
+            dbc.Container(className='stats-container', children=[
+                dbc.Card(className='stats-card drop-shadow', children=[
+                    dbc.Row(className='stats-title-row', children=[
+                        dbc.ModalTitle('SELECTION STATISTICS', className='map-modal', style={'padding-left': '17px'})
+                    ]),
+                    dcc.Loading(id='statistical-loading', className='spatial-loading', children=[
+                        dcc.Graph(id='stats-plot', className='stats-plot',
+                        style={'height': '70vh'},
+                        config={'displayModeBar': False},
+                        figure={'layout': go.Layout(xaxis={'showgrid': False, 'zeroline': False, 'showticklabels': False}, 
+                                                    yaxis={'showgrid': False, 'zeroline': False, 'showticklabels': False})}
+                        )],
+                        overlay_style={"visibility":"visible", "opacity": 0.65},                        
+                        parent_style={"visibility":"visible", "backgroundColor": "white"},
+                        type='cube',
+                        color='#00264C'
+                    ),
+                ])
+            ])
         ])
     ])
 )
@@ -213,6 +236,7 @@ app.layout = (
 @callback(
     Output('spatial-plot', 'figure'),
     Output('metadata-sample', 'children'),
+    Output('stats-plot', 'figure'),
     Input('param-select', 'value'),
     Input('sample-size', 'value'),
     Input('sample-seed', 'value'),
@@ -232,13 +256,18 @@ def update_graph_filters(param, samp_size, samp_seed, sta_select, date, mapTile,
     elif date and not sta_select: # date, not station       
         dfg = dfg[dfg.datetime.dt.date.astype(str) == date]
     elif sta_select and not date: # station, not date
-        dfg = dfg[dfg.station_id == int(sta_select)]
+        dfg = dfg[dfg.station_id.isin(sta_select)]
     else: # both
-        dfg = dfg[(dfg.station_id == (int(sta_select))) & (dfg.datetime.dt.date.astype(str) == date)]
+        dfg = dfg[(dfg.station_id.isin(sta_select)) & (dfg.datetime.dt.date.astype(str) == date)]
 
-    fig = createSpatialVis(dfg, stations, refline, param, mapTile, station_t, ref_t, coerce_t)   
-    table = dbc.Table.from_dataframe(createMetadataTables(dfg), striped=True, bordered=True, hover=True, className='metadata-table')   
-    return fig, table
+    # Figure and tables for transect vis
+    fig_transect = createSpatialVis(dfg, stations, refline, param, mapTile, station_t, ref_t, coerce_t)   
+    table = dbc.Table.from_dataframe(createMetadataTables(dfg), striped=True, bordered=True, hover=True, className='metadata-table')
+
+    # Figures for statistical vis
+    fig_stats = createStatisticsPlot(dfg)
+
+    return fig_transect, table, fig_stats
 
 # Callback for updating sample size/seed dropdown availability
 @callback(
@@ -261,18 +290,18 @@ def update_fields(date_sel, sta_select):
 )
 def metadata_button(n, is_in):
     if not n: # metadata OFF -- page load
-        style = {'background-color': '#999', 'border-color': '#00714B'}
+        style = {'background-color': '#999', 'border-color': '#00264C'}
         return False, style
     
     if n % 2 == 0: # metadata OFF
-        style = {'background-color': '#999', 'border-color': '#00714B'}
+        style = {'background-color': '#999', 'border-color': '#00264C'}
         return False, style
     
     else: # metadata ON
-        style = {'background-color': '#00714B', 'border-color': '#00714B'}
+        style = {'background-color': '#00264C', 'border-color': '#00264C'}
         return True, style
 
-# Filter reset callback    
+# Callback for resetting all filters and plots    
 @callback(
     Output('param-select', 'value'),
     Output('sample-size', 'value'),
@@ -286,7 +315,7 @@ def metadata_button(n, is_in):
     Input('reset-button', 'n_clicks'),
 )
 def reset_filters(n):
-    return 'salinity', 10000, 12345, None, None, 'carto-positron', [0], [0], [0]
+    return 'salinity', 1000, 12345, None, None, 'carto-positron', [0], [0], [0]
     
 
 if __name__ == '__main__':
