@@ -10,6 +10,8 @@ TEXTURE_BG = 'assets/texturegrad.jpg'
 
 PETERSON_HREF = 'https://www.usgs.gov/mission-areas/water-resources/science/research-vessel-david-h-peterson'
 CAWSC_HREF = 'https://www.usgs.gov/centers/california-water-science-center'
+USGS_HREF = 'https://www.usgs.gov'
+
 REF_FILE = '14322dat.txt'
 
 PARAM_NAME_UNIT_DICT = {

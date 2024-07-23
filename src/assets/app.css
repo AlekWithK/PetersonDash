@@ -1,5 +1,7 @@
 .div-body {
     background-color: #f9f9f9;
+    margin: 0px;
+    overflow-x: hidden;
 }
 
 /* Header Styling */
@@ -20,11 +22,11 @@
 }
 
 .navbar-row {
-    width: auto;
+    width: 100%;
 }
 
 .nav-img-col {
-    width: 29%;
+    width: 15%;
 }
 
 .navbar-img {
@@ -46,23 +48,18 @@
     align-self: left;
     padding-left: 0px;
     letter-spacing: 2.5px;
-    width: 50%;
 }
 
 .nav-about-col {
-    width: 10%;
-    justify-self: end;
+    justify-items: end;
     margin-right: 0;
 }
 
 .nav-about {
     color: white;
-    width: 40%;
     font-weight: 400;
     text-decoration: underline;
     display: inline;
-    margin-right: 0;
-    margin-left: auto;
 }
 
 .nav-about:hover {
@@ -108,7 +105,7 @@
     padding-left: 17px;
     padding-bottom: 5px;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    color: #999;
+    color: #888;
     font-size: 18px;
     font-weight: bold;
 }
@@ -170,7 +167,7 @@
         align-self: right;
     }    
     .map-card {
-        background-color: #999;
+        background-color: #888;
         border-radius: 0;
     }
 }
@@ -187,7 +184,7 @@
 }
 
 .spatial-plot {
-    background-color: #999;
+    background-color: #888;
     align-self: stretch;
 }
 
@@ -217,7 +214,7 @@
 .metadata-modal {
     padding-left: 4px;
     margin: 0px;
-    color: #999;
+    color: #888;
     font-size: 20px;
     font-weight: bold;
 }
@@ -228,7 +225,7 @@
 }
 
 .reset-button {
-    background-color: #999;
+    background-color: #888;
     border-color: #c73228;
     color: white;
     border-radius: 5px;
@@ -243,7 +240,7 @@
 }
 
 .reset-button:hover {
-    background-color: #999;
+    background-color: #888;
     border-color: #c73228;
 }
 
@@ -255,7 +252,7 @@
 
 .stats-card {
     border-radius: 0px;
-    background-color: #999;
+    background-color: #888;
 }
 
 

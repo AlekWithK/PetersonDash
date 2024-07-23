@@ -36,24 +36,15 @@ app = Dash(
 # Set application layout
 app.layout = (
     html.Div(className='div-body', children=[
-        dbc.Navbar(children=[
-            dbc.Container([
-                    html.A(
-                        # Use row and col to control vertical alignment of logo / brand
-                        dbc.Row([
-                                dbc.Col(children=html.Img(src=BRAND_LOGO, className="navbar-img"), className='nav-img-col'),
-                                dbc.Col(children=dbc.NavbarBrand(headerTitle, className="navbar-title"), className='nav-title-col'),
-                                dbc.Col(children=html.A(href=PETERSON_HREF, children=html.H6("ABOUT", className='nav-about')), className='nav-about-col'),
-                            ],
-                            align="center",
-                            justify='right',
-                            className="navbar-row",
-                        ),
-                        href=CAWSC_HREF,
-                        style={"textDecoration": "none"},
-                    ),
-                ],
-            className='navbar-container'),
+        dbc.Navbar(children=[                       # Use row and col to control vertical alignment of logo / brand
+            dbc.Row([
+                dbc.Col(children=html.A(href=USGS_HREF, children=html.Img(src=BRAND_LOGO, className="navbar-img")), className='nav-img-col', width=1),
+                dbc.Col(children=dbc.NavbarBrand(headerTitle, className="navbar-title"), className='nav-title-col'),
+                dbc.Col(children=html.A(href=PETERSON_HREF, children=html.H6("ABOUT", className='nav-about')), className='nav-about-col', width=1),
+            ],
+                align="center",
+                className="navbar-row",
+            ),
         ],
             #html.Img(src=RV_PETERSON, className="navbar-peterson")],
         color="#00264C",
@@ -199,9 +190,9 @@ app.layout = (
                     ),
                     dbc.Fade(className='metadata-fade', id='metadata-fade', is_in=False, children=[
                         dbc.Card(className='metadata-card', children=[
-                            dbc.ModalTitle('Selection Metadata', className='metadata-modal'),
+                            dbc.ModalTitle('Dataset Metadata', className='metadata-modal'),
                             dbc.Table.from_dataframe(createMetadataTables(df), striped=True, bordered=True, hover=True, className='metadata-table'),
-                            dbc.ModalTitle('Sample Metadata', className='metadata-modal'),
+                            dbc.ModalTitle('Selection Metadata', className='metadata-modal'),
                             html.Div(id='metadata-sample')
                         ])
                     ])
@@ -265,7 +256,7 @@ def update_graph_filters(param, samp_size, samp_seed, sta_select, date, mapTile,
     table = dbc.Table.from_dataframe(createMetadataTables(dfg), striped=True, bordered=True, hover=True, className='metadata-table')
 
     # Figures for statistical vis
-    fig_stats = createStatisticsPlot(dfg)
+    fig_stats = createStatisticsPlot(dfg, "water_temp")
 
     return fig_transect, table, fig_stats
 
@@ -290,11 +281,11 @@ def update_fields(date_sel, sta_select):
 )
 def metadata_button(n, is_in):
     if not n: # metadata OFF -- page load
-        style = {'background-color': '#999', 'border-color': '#00264C'}
+        style = {'background-color': '#888', 'border-color': '#00264C'}
         return False, style
     
     if n % 2 == 0: # metadata OFF
-        style = {'background-color': '#999', 'border-color': '#00264C'}
+        style = {'background-color': '#888', 'border-color': '#00264C'}
         return False, style
     
     else: # metadata ON
@@ -318,5 +309,6 @@ def reset_filters(n):
     return 'salinity', 1000, 12345, None, None, 'carto-positron', [0], [0], [0]
     
 
+# App run
 if __name__ == '__main__':
     app.run(debug=True)

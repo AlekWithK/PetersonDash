@@ -32,7 +32,7 @@ def createSpatialVis(dfg, stations, refline, param, mapTile, station_t, ref_t, c
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
         mapbox={'center': {'lat': 37.82, 'lon': -121.75}, 'zoom': 9},
         autosize=True,
-        paper_bgcolor='#999',
+        paper_bgcolor='#888',
         coloraxis=dict(
             colorbar=dict(thickness=20, len=0.60, x=0.01, y=0.32,
                 title=f'{PARAM_NAME_UNIT_DICT[param][0]} {PARAM_NAME_UNIT_DICT[param][1]}',
@@ -72,7 +72,7 @@ def createMetadataTables(dfmd: pd.DataFrame) -> pd.DataFrame:
     dfmd.at[0, '50%'] = dfmd.at[0, '50%'].date()
     return dfmd
 
-def createStatisticsPlot(dfg: pd.DataFrame) -> go.Figure:
+def createStatisticsPlot(dfg: pd.DataFrame, color: str="chlor") -> go.Figure:
     """Generate the statistical visualizations"""
     # Dynamically generate subplot layout based on num params
     n_rows = math.ceil(len(PARAMS_TO_PLOT) / 3)
@@ -85,12 +85,20 @@ def createStatisticsPlot(dfg: pd.DataFrame) -> go.Figure:
 
     for i in range(1, n_rows + 1):
         for j in range(1, n_cols + 1):
+            dfg = dfg.sort_values(PARAMS_TO_PLOT_rs[i-1][j-1], ascending=True)
             fig.add_trace(go.Scatter(x=dfg.d_from_start, y=dfg[PARAMS_TO_PLOT_rs[i-1][j-1]], mode='markers',
-                                     marker=dict(size=3, color='#00264C')), row=i, col=j)
+                marker=dict(size=4, 
+                            color=dfg[color], 
+                            showscale=True,
+                            colorscale='viridis',
+                            colorbar=dict(title=f'{PARAM_NAME_UNIT_DICT[color][0]} {PARAM_NAME_UNIT_DICT[color][1]}',
+                                          thickness=20))), 
+                            row=i, col=j)
 
     fig.update_layout(
         showlegend=False,
         plot_bgcolor='#F9F9F9',
+        font=dict(size=12, family='Segoe UI')
     )
     fig.update_xaxes(
         linecolor='black',
